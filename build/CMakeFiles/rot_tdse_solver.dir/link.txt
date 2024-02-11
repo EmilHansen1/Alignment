@@ -1,0 +1,1 @@
+/usr/bin/g++ -g -rdynamic CMakeFiles/rot_tdse_solver.dir/rot_tdse_solver.cpp.o -o rot_tdse_solver 

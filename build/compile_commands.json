@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/home/emil/Documents/Git/Alignment/build",
+  "command": "/usr/bin/g++   -g -o CMakeFiles/rot_tdse_solver.dir/rot_tdse_solver.cpp.o -c /home/emil/Documents/Git/Alignment/rot_tdse_solver.cpp",
+  "file": "/home/emil/Documents/Git/Alignment/rot_tdse_solver.cpp"
+}
+]
