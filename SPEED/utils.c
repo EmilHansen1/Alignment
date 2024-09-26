@@ -17,6 +17,12 @@ void print_matrix(int dim, dcmplx matrix[dim][dim])
 }
 
 
+/**
+ * @brief prints a dcmplx vector
+ * 
+ * @param dim the dimension of the hilbert space
+ * @param vec the dcmplx vector to be printed
+*/
 void print_vector(int dim, dcmplx vec[dim])
 {
     for(size_t i = 0; i < dim; i++)
@@ -56,8 +62,9 @@ dcmplx scalar_product(size_t dim, dcmplx vec1[dim], dcmplx vec2[dim])
     return result;
 }
 
+
 double inline e_field_squared(const double t, const double amplitude_squared, const double fwhm)
 {   
-    return amplitude_squared * exp(-1.20411998266 * t*t / (fwhm*fwhm));  // The number is 4*log(2)
+    return amplitude_squared * exp(-2.772588722239781 * t*t / (fwhm*fwhm));  // The number is 4*log(2)
 }
 

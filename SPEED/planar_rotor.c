@@ -31,14 +31,12 @@ double E_rot_2D(int j, double B)
  * @param B 
  * @param rot_energies 
  */
-void get_rot_energies_2D(size_t j_max, double B, double rot_energies[2*j_max + 1])
+void get_rot_energies_2D(size_t j_max, double B, double rot_energies[j_max + 1])
 {
-    int j = -j_max;
-    size_t dim = 2*j_max + 1;
-    for(size_t i = 0; i < dim; i++)
+    size_t dim = j_max + 1;
+    for(size_t j = 0; j < dim; j++)
     {
-        rot_energies[i] = E_rot_2D(j, B);
-        j++;
+        rot_energies[j] = E_rot_2D(j, B);
     }
 }
 
@@ -68,31 +66,6 @@ double cos2_2D_matelem(int j1, int j2)
 
 
 /**
- * @brief Calculate all exponentials for FF-propagation and store in a matrix
- * 
- * @param j_max 
- * @param B 
- * @param dt 
- * @param exponentials 
- */
-void get_exponentials(int j_max, double B, double dt, dcmplx exponentials[2*j_max+1][2*j_max+1])
-{
-    int j1 = -j_max;
-    int j2 = -j_max;
-    for(size_t i = 0; i < 2*j_max+1; i++)
-    {
-        for(size_t j = 0; j < 2*j_max+1; j++)
-        {
-            exponentials[i][j] = cexp(-I * B * ((double)(j2*j2 - j1*j1)) * dt);
-            j2++;
-        }
-        j2 = -j_max;
-        j1++;
-    }
-}
-
-
-/**
  * @brief Get the diagonal of the field-free propagator in free 2D rotor basis
  * 
  * @param j_max 
@@ -100,23 +73,33 @@ void get_exponentials(int j_max, double B, double dt, dcmplx exponentials[2*j_ma
  * @param dt 
  * @param propagator_diag 
  */
-void get_field_free_propagator(int j_max, double B, double dt, dcmplx propagator_diag[2*j_max+1])
+void get_field_free_propagator(int j_max, double B, double dt, dcmplx propagator_diag[j_max+1])
 {
-    int j = -j_max;
-    for(size_t i = 0; i < 2*j_max+1; i++)
+    size_t dim = j_max + 1;
+    for(size_t j = 0; j < dim; j++)
     {
-        propagator_diag[i] = cexp(-I * B * ((dcmplx) j*j) * dt);
-        j++;
+        propagator_diag[j] = cexp(-I * E_rot_2D(j, B) * dt);
     }
 }
 
 
+/**
+ * @brief Performs the field-free propagation
+ * 
+ * @param j_max
+ * @param dt
+ * @param n_steps
+ * @param time
+ * @param B
+ * @param psi0
+ * @param cos2_exp
+*/
 void field_free_propagation(const size_t j_max, const double dt, const size_t n_steps, double *time, 
-                            const double B, dcmplx psi0[2*j_max+1], double cos2_exp[n_steps])
+                            const double B, dcmplx psi0[j_max+1], double cos2_exp[n_steps])
 {
     // Get the propagator and calculate - only once! - the exponentials
     // Calculation of the complex exponentials becomes extremely time comsuming
-    size_t dim = 2*j_max + 1;
+    size_t dim = j_max + 1;
     dcmplx U[dim];
     get_field_free_propagator(j_max, B, dt, U);
     dcmplx cos2_psi[dim];   // Placeholder for psi multiplied by cos²
@@ -132,10 +115,11 @@ void field_free_propagation(const size_t j_max, const double dt, const size_t n_
         time[i] = current_time;
 
         // Calculate alignment expectation value
-        multiply_cos2_2D(j_max, psi0, cos2_psi);
-        cos2_exp[i] = (double) scalar_product(dim, psi0, cos2_psi);
+        //multiply_cos2_2D(j_max, psi0, cos2_psi);
+        cos2_exp[i] = get_cos2_2D_expval(j_max, psi0); //(double) scalar_product(dim, psi0, cos2_psi);
     }
 }
+
 
 /**
  * @brief Multiples a vector by the alignemnt cosine matrix in the field-free 2D-rotor representation
@@ -144,9 +128,9 @@ void field_free_propagation(const size_t j_max, const double dt, const size_t n_
  * @param vec 
  * @param result 
  */
-inline void multiply_cos2_2D(const size_t j_max, const dcmplx vec[2*j_max+1], dcmplx result[2*j_max+1])
+inline void multiply_cos2_2D(const size_t j_max, const dcmplx vec[j_max+1], dcmplx result[j_max+1])
 {
-    size_t dim = 2*j_max + 1;
+    size_t dim = j_max + 1;
 
     // Set two first entries
     result[0] = vec[0]/2.0 + vec[2]/4.0;
@@ -159,6 +143,28 @@ inline void multiply_cos2_2D(const size_t j_max, const dcmplx vec[2*j_max+1], dc
     // Set the final two entries - and voíla, we're done!
     result[dim-2] = vec[dim-4]/2.0 + vec[dim-2]/4.0;
     result[dim-1] = vec[dim-3]/2.0 + vec[dim-1]/4.0;
+}
+
+
+double get_cos2_2D_expval(const size_t j_max, const dcmplx psi[j_max+1])
+{
+    size_t dim = j_max + 1;
+
+    // Keep in mind the degeneracy! It is 2 for all states except j = 0. 
+    // We therefore scale and renormalize psi.
+    dcmplx psi_scaled[dim];
+    for(int i = 0; i < dim; i++)
+    {
+        double degeneracy = (i == 0) ? 1.0 : 2.0;
+        psi_scaled[i] = psi[i] * degeneracy;
+    }
+    double norm_factor = (double) 1.0/sqrt(scalar_product(dim, psi_scaled, psi_scaled));
+    for(int i = 0; i < dim; i++) psi_scaled[i] *= norm_factor;
+
+    // Multiply the state by the matrix representation of cos^2
+    dcmplx cos2_psi[dim];
+    multiply_cos2_2D(j_max, psi_scaled, cos2_psi);
+    return (double) scalar_product(dim, psi_scaled, cos2_psi);
 }
 
 
@@ -176,7 +182,7 @@ int planar_rotor_ode(double t, const double _psi[], double _psi_deriv[], void *p
     ode_params *p = (ode_params*) params;
     double field_sq = e_field_squared(t, p->e_field_sq, p->fwhm);
 
-    // GSL requires double[], so we convert bback to dcmplx[]
+    // GSL requires double[], so we convert back to dcmplx[]
     // Note that _psi_deriv and psi_deriv are just two representations of the SAME array! As for _psi and psi
     const dcmplx *psi = (const dcmplx*) _psi;
     dcmplx *psi_deriv = (dcmplx*) _psi_deriv;
@@ -185,7 +191,7 @@ int planar_rotor_ode(double t, const double _psi[], double _psi_deriv[], void *p
     multiply_cos2_2D(p->j_max, psi, psi_deriv);
 
     // The rotor TDSE
-    for(int i = 0; i < 2*p->j_max + 1; i++)
+    for(int i = 0; i < p->j_max + 1; i++)
         psi_deriv[i] = -I*(p->E_rot[i]*psi[i] - field_sq*p->delta_alpha*psi_deriv[i]/4.0);
 
     return GSL_SUCCESS;
@@ -208,10 +214,10 @@ int planar_rotor_ode(double t, const double _psi[], double _psi_deriv[], void *p
  * @param cos2_exp 
  */
 void field_propagation(const size_t j_max, const size_t n_steps, const double dt, const double B, const double fwhm, 
-                       const double e_field_sq, const double delta_alpha, double *time, double E_rot[2*j_max+1], 
-                       dcmplx psi0[2*j_max+1], double cos2_exp[n_steps])
+                       const double e_field_sq, const double delta_alpha, double *time, double E_rot[j_max+1], 
+                       dcmplx psi0[j_max+1], double cos2_exp[n_steps])
 {
-    size_t dim = 2*j_max + 1;
+    size_t dim = j_max + 1;
     ode_params p = {j_max, e_field_sq, fwhm, E_rot, delta_alpha};
     gsl_odeiv2_system sys = {.dimension = 2*dim, .jacobian=NULL, .function=&planar_rotor_ode, .params=&p};
 
@@ -227,8 +233,8 @@ void field_propagation(const size_t j_max, const size_t n_steps, const double dt
     dcmplx cos2_psi[dim];   // Placeholder for psi multiplied by cos²
 
     // Calculate first alignment expectation value
-    multiply_cos2_2D(j_max, psi0, cos2_psi);
-    cos2_exp[0] += (double) scalar_product(dim, psi0, cos2_psi);
+    //multiply_cos2_2D(j_max, psi0, cos2_psi);
+    cos2_exp[0] += get_cos2_2D_expval(j_max, psi0); //(double) scalar_product(dim, psi0, cos2_psi);
 
     // Solve the ode
     ode_timer = t0;
@@ -238,9 +244,15 @@ void field_propagation(const size_t j_max, const size_t n_steps, const double dt
         time[i] = ode_timer;
 
         // Calculate alignment expectation value
-        multiply_cos2_2D(j_max, psi0, cos2_psi);
-        cos2_exp[i] = (double) scalar_product(dim, psi0, cos2_psi);
+        //multiply_cos2_2D(j_max, psi0, cos2_psi);
+        cos2_exp[i] = get_cos2_2D_expval(j_max, psi0); //(double) scalar_product(dim, psi0, cos2_psi);
         //printf("%f\n", cos2_exp[i]);
     } 
     gsl_odeiv2_driver_free(ode_driver);
+}
+
+
+void propagate_planar_rotor(const size_t j_max, const size_t n_steps_field, const size_t n_steps_field_free )
+{
+
 }

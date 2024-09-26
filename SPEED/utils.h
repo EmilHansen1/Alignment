@@ -40,6 +40,6 @@ dcmplx* matmul_fast_three_band(size_t dim, dcmplx mat[dim][dim], dcmplx vec[dim]
 
 dcmplx scalar_product(size_t dim, dcmplx vec1[dim], dcmplx vec2[dim]);
 
-double extern e_field_squared(const double t, const double amplitude_squared, const double fwhm);
+double e_field_squared(const double t, const double amplitude_squared, const double fwhm);
 
 #endif /* UTILS_H */
