@@ -1,4 +1,6 @@
 #include "utils.h"
+#include <gsl/gsl_interp.h>
+#include <gsl/gsl_spline.h>
 
 /**
  * @brief prints a standard 2D array
@@ -76,6 +78,19 @@ double inline e_field_squared(const double t, const double amplitude_squared, co
     return amplitude_squared * exp(-FOUR_LOG_TWO * t*t / (fwhm*fwhm));
 }
 
+/**
+ * @brief The electric field squared for a custom pulse
+ * 
+ * @param t the time in a.u.
+ * @param amplitude_squared the amplitude of the e-field in a.u.
+ * @param spline the spline object used
+ * @param acc the spline accelerator
+ */
+double e_field_squared_custom(const double t, const double amplitude_squared, const gsl_spline *spline, gsl_interp_accel *acc)
+{
+    return amplitude_squared * gsl_spline_eval(spline, t, acc);
+}
+
 
 /**
  * @brief Get the thermal weights
@@ -97,7 +112,6 @@ size_t get_thermal_weights_funciton(solver_params *solver, double weights[solver
     int j_counter = (solver->type == PLANAR_ROTOR) ? -solver->molecule->j_max : 0;
     for(size_t i = 0; i < solver->dim; i++)
     {  
-        printf("j = %d and i = %d\n", j_counter, i);
         double abundance = (j_counter % 2) ? solver->molecule->even_abundance : solver->molecule->odd_abundance;
         weights[i] = abundance * exp(-beta * solver->molecule->E_rot[i]);
 
@@ -115,12 +129,11 @@ size_t get_thermal_weights_funciton(solver_params *solver, double weights[solver
     // 'Trim off' the unneccesary parts of the ensemble and calculate the partition function
     if(solver->type == PLANAR_ROTOR)
     {   
-        // Start from the middle of the weights (ground state) and work left and right
+        // Start from the middle of the weights (ground state) and work left and right simultaneously
         for(size_t i = solver->molecule->j_max; i < solver->dim; i++)
         {
             size_t idx_left = solver->dim - i - 1;
             size_t idx_right = i;
-            printf("indexes: %d %d %d\n", idx_left, idx_right, solver->molecule->j_max);
 
             if(i == solver->molecule->j_max)
             {

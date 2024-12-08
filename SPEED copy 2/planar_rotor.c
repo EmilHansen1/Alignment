@@ -175,9 +175,10 @@ inline void multiply_cos2_2D(const size_t j_max, const dcmplx vec[2*j_max+1], dc
 int planar_rotor_ode(double t, const double _psi[], double _psi_deriv[], void *params)
 {
     ode_params *p = (ode_params*) params;
-    double field_sq = e_field_squared(t, p->e_field_sq, p->fwhm);
+    double field_sq = (p->laser->custom_pulse_flag) ? 
+                      e_field_squared_custom(t, p->e_field_sq, p->laser->spline, p->laser->acc) : e_field_squared(t, p->e_field_sq, p->fwhm);
 
-    // GSL requires double[], so we convert bback to dcmplx[]
+    // GSL requires double[], so we convert back to dcmplx[]
     // Note that _psi_deriv and psi_deriv are just two representations of the SAME array! As for _psi and psi
     const dcmplx *psi = (const dcmplx*) _psi;
     dcmplx *psi_deriv = (dcmplx*) _psi_deriv;
@@ -210,15 +211,15 @@ int planar_rotor_ode(double t, const double _psi[], double _psi_deriv[], void *p
  */
 void field_propagation(const size_t j_max, const size_t n_steps, const double dt, const double B, const double fwhm, 
                        const double e_field_sq, const double delta_alpha, const double E_rot[2*j_max+1], 
-                       dcmplx psi0[2*j_max+1], double t0, size_t *counter, double *cos2_exp, double weight)
+                       dcmplx psi0[2*j_max+1], double t0, size_t *counter, double *cos2_exp, double weight, const field_params *fp)
 
 {
     size_t dim = 2*j_max + 1;
-    ode_params p = {j_max, e_field_sq, fwhm, E_rot, delta_alpha};
+    ode_params p = {j_max, e_field_sq, fwhm, E_rot, delta_alpha, fp};
     gsl_odeiv2_system sys = {.dimension = 2*dim, .jacobian=NULL, .function=&planar_rotor_ode, .params=&p};
 
     // Set up ode driver
-    double initial_stepsize = 6.0 * fwhm / ((double) n_steps);
+    double initial_stepsize = 40.0 * (1e-12 * 4.134137333518211e+16) / ((double) n_steps);
     gsl_odeiv2_driver *ode_driver = gsl_odeiv2_driver_alloc_y_new(
         &sys, gsl_odeiv2_step_rk8pd, initial_stepsize, 1e-5, 1e-5
     );
@@ -266,7 +267,8 @@ void planar_rotor_propagation(const solver_params *params, dcmplx psi0[params->d
                       params->t_start,
                       &counter, 
                       cos2,
-                      weight);
+                      weight,
+                      params->field);
 
     // Solve the field-free evolution 
     field_free_propagation(params->molecule->j_max,

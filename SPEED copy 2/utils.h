@@ -17,8 +17,8 @@ typedef struct
 {
     double B;
     const double delta_alpha;
-    const double even_abundance;
-    const double odd_abundance;
+    double even_abundance;
+    double odd_abundance;
     const double delta_B;
     const double *E_rot;
     const size_t j_max;
@@ -33,10 +33,11 @@ typedef struct
     double e_field_squared;
 
     const bool custom_pulse_flag;
-    const gsl_interp_accel *acc;
+    gsl_interp_accel *acc;
     const gsl_spline *spline;
     
 } field_params;
+
 
 typedef enum
 {
@@ -44,6 +45,7 @@ typedef enum
     LINEAR_ROTOR,
     SYMMETRIC_TOP
 } rotor_type;
+
 
 typedef struct
 {
@@ -69,7 +71,9 @@ dcmplx* matmul_fast_three_band(size_t dim, dcmplx mat[dim][dim], dcmplx vec[dim]
 
 dcmplx scalar_product(size_t dim, dcmplx vec1[dim], dcmplx vec2[dim]);
 
-double extern e_field_squared(const double t, const double amplitude_squared, const double fwhm);
+double e_field_squared(const double t, const double amplitude_squared, const double fwhm);
+
+double e_field_squared_custom(const double t, const double amplitude_squared, const gsl_spline *spline, gsl_interp_accel *acc);
 
 size_t get_thermal_weights_funciton(solver_params *solver, double weights[solver->dim]);
 

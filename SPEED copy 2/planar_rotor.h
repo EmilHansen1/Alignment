@@ -12,6 +12,7 @@ typedef struct
     const double fwhm;          // The full width at half maximum of the of the Gaussian pulse 
     const double *E_rot;        // Array with the rotational energy levels (from -j to j)
     const double delta_alpha;   // Polarizability anisotropy
+    const field_params *laser;   
 } ode_params; 
 
 double E_rot_2D(int j, double B);
@@ -31,7 +32,7 @@ int planar_rotor_ode(double t, const double _psi[], double _psi_deriv[], void* p
 
 void field_propagation(const size_t j_max, const size_t n_steps, const double dt, const double B, const double fwhm, 
                        const double e_field_sq, const double delta_alpha, const double E_rot[2*j_max+1], 
-                       dcmplx psi0[2*j_max+1], double t0, size_t *counter, double cos2_exp[], double weight);
+                       dcmplx psi0[2*j_max+1], double t0, size_t *counter, double cos2_exp[], double weight, const field_params *fp);
 
 void planar_rotor_propagation(const solver_params *params, dcmplx psi0[params->dim], double cos2[], double weight);
 
