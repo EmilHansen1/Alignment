@@ -11,7 +11,25 @@
 
 #define FOUR_LOG_TWO 2.772588722239781
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846264338327950288
+#endif
+
 typedef double _Complex dcmplx;
+
+
+typedef struct
+{
+    size_t N;
+    double *diag;
+    double *off_diag; 
+} tridiag;
+
+typedef struct 
+{
+    size_t j;
+    int m;
+} free_3d_qn;
 
 typedef struct
 {
@@ -22,6 +40,8 @@ typedef struct
     const double delta_B;
     const double *E_rot;
     const size_t j_max;
+    const double homonuclear_abundance;
+    const free_3d_qn *qn; 
 
 } molecule_params;
 
@@ -34,16 +54,36 @@ typedef struct
 
     const bool custom_pulse_flag;
     gsl_interp_accel *acc;
-    const gsl_spline *spline;
+    gsl_spline *spline;
     
 } field_params;
+
+
+typedef struct 
+{
+    // Linewidth averaging
+    const size_t n_lw;
+    const double delta_B;
+
+    // Focal averaging
+    const size_t n_theta;
+    const size_t n_r;
+    const double w_x;
+    const double w_y;
+    const double w_probe;
+
+    // Thermal averaging
+    const double T;
+    const double beta;
+} avg_params;
 
 
 typedef enum
 {
     PLANAR_ROTOR,
     LINEAR_ROTOR,
-    SYMMETRIC_TOP
+    SYMMETRIC_TOP,
+    CONSTRAINED_ROTOR
 } rotor_type;
 
 
@@ -51,6 +91,7 @@ typedef struct
 {
     molecule_params* molecule; 
     field_params *field;
+    avg_params *avg;
     const rotor_type type;
     const double temperature;
     const double beta;
@@ -60,7 +101,20 @@ typedef struct
     const double dt;
     const double t_start;
     const double t_end;
+    const tridiag *diagonals;
 } solver_params;
+
+
+typedef struct 
+{
+    const size_t j_max;         // The maximum angular momentum quantum number
+    const double e_field_sq;    // The peak E-field squared
+    const double fwhm;          // The full width at half maximum of the of the Gaussian pulse 
+    const double *E_rot;        // Array with the rotational energy levels
+    const double delta_alpha;   // Polarizability anisotropy
+    const field_params *laser;  // Laser params
+    const tridiag *diagonals;    // The diagonals of the interaction Hamiltonian
+} ode_params; 
 
 
 void print_matrix(int dim, dcmplx matrix[dim][dim]);

@@ -5,16 +5,6 @@
 
 typedef double _Complex dcmplx;
 
-typedef struct 
-{
-    const size_t j_max;         // The maximum angular momentum quantum number
-    const double e_field_sq;          // The peak E-field squared
-    const double fwhm;          // The full width at half maximum of the of the Gaussian pulse 
-    const double *E_rot;        // Array with the rotational energy levels (from -j to j)
-    const double delta_alpha;   // Polarizability anisotropy
-    const field_params *laser;   
-} ode_params; 
-
 double E_rot_2D(int j, double B);
 
 void get_rot_energies_2D(size_t j_max, double B, double rot_energies[2*j_max + 1]);
@@ -34,9 +24,9 @@ void field_propagation(const size_t j_max, const size_t n_steps, const double dt
                        const double e_field_sq, const double delta_alpha, const double E_rot[2*j_max+1], 
                        dcmplx psi0[2*j_max+1], double t0, size_t *counter, double cos2_exp[], double weight, const field_params *fp);
 
-void planar_rotor_propagation(const solver_params *params, dcmplx psi0[params->dim], double cos2[], double weight);
+void planar_rotor_propagation(solver_params *params, dcmplx psi0[params->dim], double cos2[], double weight);
 
-size_t get_planar_thermal_weights(const solver_params *params, double weights[params->dim]);
+size_t get_planar_thermal_weights(solver_params *params, double weights[params->dim]);
 
 
 

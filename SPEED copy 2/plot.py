@@ -32,8 +32,8 @@ times, cos2, field = np.loadtxt('cos2.out', delimiter=',').T
 #cos2 = (cos2 - 0.5) * 0.42 + 0.5 # For K
 ax.plot(times, cos2, 'b-')
 
-times, cos2, field = np.loadtxt('cos2_K_singlet.out', delimiter=',').T
-ax.plot(times, cos2, 'k--')
+#times, cos2, field = np.loadtxt('cos2_K_singlet.out', delimiter=',').T
+#ax.plot(times, cos2, 'k--')
 
 ax2 = ax.twinx()
 ax2.fill_between(times, field, alpha=0.4, color='gray')
@@ -47,6 +47,12 @@ ax2.set(ylim=(0, 1.2))
 
 
 plt.show()
+'''
+iters, times, cos2 = np.loadtxt(r'Tests/Nonadiabatic/Rb3DSingletHomoB0.66D0.05I3.4e10WFA.csv', delimiter=',', skiprows=1).T
+iters2, times2, cos22 = np.loadtxt(r'Tests/Nonadiabatic/Rb3DSingletHeteroB0.66D0.05I3.4e10WFA.csv', delimiter=',', skiprows=1).T
+plt.plot(times, cos2 * 0.933 + + cos22 * (1 - 0.933))
+plt.show()'''
+
 
 #times, cos2_1, field = np.loadtxt('cos2_Rb_1.out', delimiter=',').T
 #times, cos2_2, field = np.loadtxt('cos2_Rb_2.out', delimiter=',').T
@@ -84,7 +90,7 @@ ax2.minorticks_on()'''
 fig, axs = plt.subplots(3, 1, sharex='all', figsize=(5, 8), )
 
 # Na2
-times_Na, cos2_Na, _ = np.loadtxt('cos2_Na.out', delimiter=',').T
+times_Na, cos2_Na, _ = nploadtxt('cos2_Na.out', delimiter=',').T
 axs[0].plot(times_Na, cos2_Na, 'b-', lw=0.75)
 
 # K2

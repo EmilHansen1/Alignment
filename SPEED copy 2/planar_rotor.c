@@ -36,7 +36,7 @@ void get_rot_energies_2D(size_t j_max, double B, double rot_energies[2*j_max + 1
 {
     int j = -j_max;
     size_t dim = 2*j_max + 1;
-    for(size_t i = 0; i < dim; i++)
+    for (size_t i = 0; i < dim; i++)
     {
         rot_energies[i] = E_rot_2D(j, B);
         j++;
@@ -53,11 +53,11 @@ void get_rot_energies_2D(size_t j_max, double B, double rot_energies[2*j_max + 1
  */
 double cos2_2D_matelem(int j1, int j2)
 {
-    if(j1 == j2)
+    if (j1 == j2)
     {
         return 1./2.;
     }
-    else if(abs(j1 - j2) == 2)
+    else if (abs(j1 - j2) == 2)
     {
         return 1./4.;
     }
@@ -80,9 +80,9 @@ void get_exponentials(int j_max, double B, double dt, dcmplx exponentials[2*j_ma
 {
     int j1 = -j_max;
     int j2 = -j_max;
-    for(size_t i = 0; i < 2*j_max+1; i++)
+    for (size_t i = 0; i < 2*j_max+1; i++)
     {
-        for(size_t j = 0; j < 2*j_max+1; j++)
+        for (size_t j = 0; j < 2*j_max+1; j++)
         {
             exponentials[i][j] = cexp(-I * B * ((double)(j2*j2 - j1*j1)) * dt);
             j2++;
@@ -104,7 +104,7 @@ void get_exponentials(int j_max, double B, double dt, dcmplx exponentials[2*j_ma
 void get_field_free_propagator(int j_max, double B, double dt, dcmplx propagator_diag[2*j_max+1])
 {
     int j = -j_max;
-    for(size_t i = 0; i < 2*j_max+1; i++)
+    for (size_t i = 0; i < 2*j_max+1; i++)
     {
         propagator_diag[i] = cexp(-I * B * ((dcmplx) j*j) * dt);
         j++;
@@ -123,10 +123,10 @@ void field_free_propagation(const size_t j_max, const double dt, const size_t n_
     dcmplx cos2_psi[dim];   // Placeholder for psi multiplied by cos²
 
     // Take the rest of the steps
-    for(size_t i = 0; i <= n_steps; i++)
+    for (size_t i = 0; i <= n_steps; i++)
     {
         // Multiply by propagator and update time
-        for(size_t j = 0; j < dim; j++)
+        for (size_t j = 0; j < dim; j++)
             psi0[j] *= U[j];
 
         // Calculate alignment expectation value
@@ -154,7 +154,7 @@ inline void multiply_cos2_2D(const size_t j_max, const dcmplx vec[2*j_max+1], dc
     result[1] = vec[1]/2.0 + vec[3]/4.0;
 
     // Set the middle dim - 4 entries
-    for(size_t i = 2; i < dim - 2; i++)
+    for (size_t i = 2; i < dim - 2; i++)
         result[i] = vec[i-2]/4.0 + vec[i]/2.0 + vec[i+2]/4.0;
 
     // Set the final two entries - and voíla, we're done!
@@ -187,7 +187,7 @@ int planar_rotor_ode(double t, const double _psi[], double _psi_deriv[], void *p
     multiply_cos2_2D(p->j_max, psi, psi_deriv);
 
     // The rotor TDSE
-    for(int i = 0; i < 2*p->j_max + 1; i++)
+    for (int i = 0; i < 2*p->j_max + 1; i++)
         psi_deriv[i] = -I*(p->E_rot[i]*psi[i] - field_sq*p->delta_alpha*psi_deriv[i]/4.0);
 
     return GSL_SUCCESS;
@@ -219,7 +219,7 @@ void field_propagation(const size_t j_max, const size_t n_steps, const double dt
     gsl_odeiv2_system sys = {.dimension = 2*dim, .jacobian=NULL, .function=&planar_rotor_ode, .params=&p};
 
     // Set up ode driver
-    double initial_stepsize = 40.0 * (1e-12 * 4.134137333518211e+16) / ((double) n_steps);
+    double initial_stepsize = 4.0 * fwhm * (1e-12 * 4.134137333518211e+16) / ((double) n_steps);
     gsl_odeiv2_driver *ode_driver = gsl_odeiv2_driver_alloc_y_new(
         &sys, gsl_odeiv2_step_rk8pd, initial_stepsize, 1e-5, 1e-5
     );
@@ -235,7 +235,7 @@ void field_propagation(const size_t j_max, const size_t n_steps, const double dt
 
     // Solve the ode
     ode_timer = t0;
-    for(size_t i = 1; i < n_steps; i++)
+    for (size_t i = 1; i < n_steps; i++)
     {
         // Apply the driver
         gsl_odeiv2_driver_apply(ode_driver, &ode_timer, t0 + (double) i*dt, (double*) psi0);
@@ -249,7 +249,7 @@ void field_propagation(const size_t j_max, const size_t n_steps, const double dt
 }
 
 
-void planar_rotor_propagation(const solver_params *params, dcmplx psi0[params->dim], double cos2[], double weight)
+void planar_rotor_propagation(solver_params *params, dcmplx psi0[params->dim], double cos2[], double weight)
 {
     // Counter for keeping track of the time(step)
     size_t counter = 0;
@@ -283,13 +283,13 @@ void planar_rotor_propagation(const solver_params *params, dcmplx psi0[params->d
 
 
 
-size_t get_planar_thermal_weights(const solver_params *params, double weights[params->dim])
+size_t get_planar_thermal_weights(solver_params *params, double weights[params->dim])
 {
     // First calculate the partition function
     size_t j_max = params->molecule->j_max;
     int j_counter = (int) -j_max;
     double partition_function = 0.0;
-    for(size_t i = 0; i < params->dim; i++)
+    for (size_t i = 0; i < params->dim; i++)
     {
         double abundance = (j_counter % 2 == 0) ? params->molecule->even_abundance : params->molecule->odd_abundance;
         partition_function += abundance * exp(-params->beta * params->molecule->E_rot[i]);
@@ -300,10 +300,10 @@ size_t get_planar_thermal_weights(const solver_params *params, double weights[pa
     double state_sum = 0.0;
     size_t n_states_thermal = 0;
     j_counter = 0;
-    for(int i = params->molecule->j_max; i < params->dim; i++)
+    for (int i = params->molecule->j_max; i < params->dim; i++)
     {
         // ...Break if we have reached 99.9 percent
-        if(state_sum / partition_function > 0.999) 
+        if (state_sum / partition_function > 0.999) 
             break;
 
         double abundance = (double) (j_counter % 2 == 0) ? params->molecule->even_abundance : params->molecule->odd_abundance;
