@@ -6,11 +6,12 @@ default: main
 	./$<
 	python3 plot.py
 
-main: main.o units.o planar_rotor.o utils.o input_loader.o #Linear_rotor.o
+main: main.o units.o planar_rotor.o utils.o input_loader.o averaging.o
 units.o: units.h
 utils.o: utils.h units.o
 planar_rotor.o: planar_rotor.h units.o utils.o
 input_loader.o: input_loader.h planar_rotor.o units.o utils.o
+averaging.o: averaging.h units.o utils.o	
 #linear_rotor.o: linear_rotor.h units.h utils.o
 
 clean:

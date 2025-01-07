@@ -255,27 +255,27 @@ void planar_rotor_propagation(solver_params *params, dcmplx psi0[params->dim], d
     size_t counter = 0;
 
     // Solve the ODE during the field
-    field_propagation(params->molecule->j_max,
+    field_propagation(params->molecule.j_max,
                       params->n_steps_field, 
                       params->dt, 
-                      params->molecule->B, 
-                      params->field->fwhm, 
-                      params->field->e_field_squared,
-                      params->molecule->delta_alpha, 
-                      params->molecule->E_rot,
+                      params->molecule.B, 
+                      params->field.fwhm, 
+                      params->field.e_field_squared,
+                      params->molecule.delta_alpha, 
+                      params->molecule.E_rot,
                       psi0,
                       params->t_start,
                       &counter, 
                       cos2,
                       weight,
-                      params->field);
+                      &(params->field));
 
     // Solve the field-free evolution 
-    field_free_propagation(params->molecule->j_max,
+    field_free_propagation(params->molecule.j_max,
                            params->dt,
                            params->n_steps_field_free, 
                            &counter,
-                           params->molecule->B,
+                           params->molecule.B,
                            psi0,
                            cos2,
                            weight);
@@ -286,13 +286,13 @@ void planar_rotor_propagation(solver_params *params, dcmplx psi0[params->dim], d
 size_t get_planar_thermal_weights(solver_params *params, double weights[params->dim])
 {
     // First calculate the partition function
-    size_t j_max = params->molecule->j_max;
+    size_t j_max = params->molecule.j_max;
     int j_counter = (int) -j_max;
     double partition_function = 0.0;
     for (size_t i = 0; i < params->dim; i++)
     {
-        double abundance = (j_counter % 2 == 0) ? params->molecule->even_abundance : params->molecule->odd_abundance;
-        partition_function += abundance * exp(-params->beta * params->molecule->E_rot[i]);
+        double abundance = (j_counter % 2 == 0) ? params->molecule.even_abundance : params->molecule.odd_abundance;
+        partition_function += abundance * exp(-params->beta * params->molecule.E_rot[i]);
         j_counter++;
     }
 
@@ -300,14 +300,14 @@ size_t get_planar_thermal_weights(solver_params *params, double weights[params->
     double state_sum = 0.0;
     size_t n_states_thermal = 0;
     j_counter = 0;
-    for (int i = params->molecule->j_max; i < params->dim; i++)
+    for (int i = params->molecule.j_max; i < params->dim; i++)
     {
         // ...Break if we have reached 99.9 percent
         if (state_sum / partition_function > 0.999) 
             break;
 
-        double abundance = (double) (j_counter % 2 == 0) ? params->molecule->even_abundance : params->molecule->odd_abundance;
-        double boltzmann_factor = ((i == j_max) ? 1.0 : 2.0) * abundance * exp(-params->beta * params->molecule->E_rot[i]);
+        double abundance = (double) (j_counter % 2 == 0) ? params->molecule.even_abundance : params->molecule.odd_abundance;
+        double boltzmann_factor = ((i == j_max) ? 1.0 : 2.0) * abundance * exp(-params->beta * params->molecule.E_rot[i]);
         weights[i] += boltzmann_factor / partition_function;
         state_sum += boltzmann_factor;
         n_states_thermal += (i == j_max) ? 1 : 2;

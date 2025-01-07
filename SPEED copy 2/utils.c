@@ -1,6 +1,24 @@
 #include "utils.h"
+#include "units.h"
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
+
+/**
+ * @brief prints the solver parameters
+ * 
+ * @param params the solver parameters
+ */
+void print_solver_params(const solver_params *params)
+{
+    printf("dim = %zu\n", params->dim);
+    printf("temperature = %.6f K\n", params->temperature);
+    printf("t_start = %.6f, t_end = %.6f, dt = %.6f\n", params->t_start, params->t_end, params->dt);
+    printf("molecule B = %.6f GHz, delta_alpha = %.6f Å, j_max = %zu\n",
+           params->molecule.B / au_frequency_per_SI / 2.0 / M_PI / 1.0e9, params->molecule.delta_alpha / pow(au_per_angstrom, 3.0), params->molecule.j_max);
+    printf("field E_field^2 = %.6f, fwhm = %.6f ps\n", params->field.e_field_squared, params->field.fwhm / au_per_ps);
+    printf("custom_pulse_flag = %d\n", params->field.custom_pulse_flag);
+    printf("avg w_x = %.6f, w_y = %.6f, n_lw = %zu\n", params->avg.w_x, params->avg.w_y, params->avg.n_lw);
+}
 
 /**
  * @brief prints a standard 2D array
@@ -109,11 +127,11 @@ size_t get_thermal_weights_funciton(solver_params *solver, double weights[solver
     double partition_funciton = 0.0;
 
     // Calculate the individual Boltzmann factors and weights based on rotor type
-    int j_counter = (solver->type == PLANAR_ROTOR) ? -solver->molecule->j_max : 0;
+    int j_counter = (solver->type == PLANAR_ROTOR) ? -solver->molecule.j_max : 0;
     for(size_t i = 0; i < solver->dim; i++)
     {  
-        double abundance = (j_counter % 2) ? solver->molecule->even_abundance : solver->molecule->odd_abundance;
-        weights[i] = abundance * exp(-beta * solver->molecule->E_rot[i]);
+        double abundance = (j_counter % 2) ? solver->molecule.even_abundance : solver->molecule.odd_abundance;
+        weights[i] = abundance * exp(-beta * solver->molecule.E_rot[i]);
 
         // Calculate partition function directly for non-planar rotors
         if(solver->type != PLANAR_ROTOR)
@@ -130,12 +148,12 @@ size_t get_thermal_weights_funciton(solver_params *solver, double weights[solver
     if(solver->type == PLANAR_ROTOR)
     {   
         // Start from the middle of the weights (ground state) and work left and right simultaneously
-        for(size_t i = solver->molecule->j_max; i < solver->dim; i++)
+        for(size_t i = solver->molecule.j_max; i < solver->dim; i++)
         {
             size_t idx_left = solver->dim - i - 1;
             size_t idx_right = i;
 
-            if(i == solver->molecule->j_max)
+            if(i == solver->molecule.j_max)
             {
                 partition_funciton += weights[i];
             }
@@ -161,6 +179,4 @@ size_t get_thermal_weights_funciton(solver_params *solver, double weights[solver
 
     return ensemble_size;
 }
-
-
 

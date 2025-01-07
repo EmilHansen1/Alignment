@@ -3,14 +3,14 @@
 
 #include "utils.h"
 
-void load_input(int argc, char *argv[], molecule_params *molecule, field_params *field, solver_params *params, avg_params *avg);
+solver_params load_input(int argc, char *argv[]);
 
-void load_command_line_arguments(int argc, char *argv[], molecule_params *molecule, field_params *field, solver_params *params, avg_params *avg);
+solver_params load_command_line_arguments(int argc, char *argv[]);
 
-void load_from_file(char *filename, molecule_params *molecule, field_params *field, solver_params *params, avg_params *avg);
+solver_params load_from_file(char *filename);
 
-void load_directly(molecule_params *molecule, field_params *field, solver_params *params, avg_params *avg);
+solver_params load_directly();
 
-void get_custom_pulse_spline(char *filename, solver_params *params);
+void get_custom_pulse_spline(solver_params *params);
 
 #endif // HAVE_INPUT_LOADER_H

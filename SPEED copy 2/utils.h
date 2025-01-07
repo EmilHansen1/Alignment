@@ -38,7 +38,7 @@ typedef struct
     double even_abundance;
     double odd_abundance;
     const double delta_B;
-    const double *E_rot;
+    double *E_rot;
     const size_t j_max;
     const double homonuclear_abundance;
     const free_3d_qn *qn; 
@@ -51,8 +51,10 @@ typedef struct
     const size_t n_pulses;
     double fwhm;
     double e_field_squared;
+    double intensity_SI;
 
     const bool custom_pulse_flag;
+    const char *custom_pulse_fname;
     gsl_interp_accel *acc;
     gsl_spline *spline;
     
@@ -89,9 +91,9 @@ typedef enum
 
 typedef struct
 {
-    molecule_params* molecule; 
-    field_params *field;
-    avg_params *avg;
+    molecule_params molecule; 
+    field_params field;
+    avg_params avg;
     const rotor_type type;
     const double temperature;
     const double beta;
@@ -101,8 +103,11 @@ typedef struct
     const double dt;
     const double t_start;
     const double t_end;
+    const char *out_fname;
     const tridiag *diagonals;
 } solver_params;
+
+void print_solver_params(const solver_params *params);
 
 
 typedef struct 
@@ -115,6 +120,7 @@ typedef struct
     const field_params *laser;  // Laser params
     const tridiag *diagonals;    // The diagonals of the interaction Hamiltonian
 } ode_params; 
+
 
 
 void print_matrix(int dim, dcmplx matrix[dim][dim]);
